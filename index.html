@@ -182,9 +182,11 @@ function initData() {
     const end   = new Date(ey,em-1,ed);
     const daySet = new Set(r.days);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
-      if (daySet.has(WEEKDAYS[d.getDay()])) {
+      const ds = fmtDate(d);
+      const excluded = new Set(r.excludeDates||[]);
+      if (daySet.has(WEEKDAYS[d.getDay()]) && !excluded.has(ds)) {
         EVENTS_FLAT.push({
-          date: fmtDate(d), title: r.title, phase: r.phase,
+          date: ds, title: r.title, phase: r.phase,
           color: PHASE_COLORS[r.phase]||PHASE_COLORS['default'],
           startTime: r.startTime, endTime: r.endTime,
           allDay: false, note: r.note||null
@@ -426,21 +428,16 @@ function renderWeek() {
 
 // ── Day view ──────────────────────────────────────────────────────────────
 let dayZoom = 56; // px per hour, default
+const DAY_START = 0;  // always midnight
+const DAY_END   = 23; // always 11pm (24th row = midnight end)
 
 function renderDay(d) {
   const ds = fmtDate(d);
+  const isToday = ds === todayStr();
   document.getElementById('navLabel').textContent = `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
   const evs = eventsOn(ds);
   const allDays = evs.filter(e => e.allDay);
   const timed   = evs.filter(e => !e.allDay && e.startTime);
-
-  // Compute DAY_START from earliest event, or default 0
-  let earliest = 24;
-  timed.forEach(e => {
-    const h = Math.floor(timeToMins(e.startTime) / 60);
-    if (h < earliest) earliest = h;
-  });
-  const DAY_START = timed.length ? Math.max(0, earliest) : 0;
   const HOUR_H = dayZoom;
 
   const mv = document.getElementById('mainView');
@@ -467,37 +464,84 @@ function renderDay(d) {
     html += allDays.map(e => `<div class="modal-allday" style="border-left:3px solid ${e.color};color:${e.color}">${e.title}</div>`).join('');
   }
 
-  if (timed.length === 0 && allDays.length === 0) {
-    html += '<div style="padding:32px 0;color:var(--text-muted);text-align:center">No events</div>';
-    mv.innerHTML = html; return;
-  }
-
-  // Scrollable time grid
+  // Scrollable time grid — always 12am–12am
   html += '<div id="dayScrollArea" style="overflow-y:auto;max-height:calc(100vh - 220px);margin-top:8px">';
   html += '<div class="day-view-grid"><div class="time-col">';
-  for (let h = DAY_START; h <= 23; h++) {
+  for (let h = DAY_START; h <= DAY_END; h++) {
     const label = h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h-12}pm`;
     html += `<div class="time-slot-label" style="height:${HOUR_H}px">${label}</div>`;
   }
-  html += '</div><div class="day-view-col">';
-  for (let h = DAY_START; h <= 23; h++) html += `<div class="hour-line" style="height:${HOUR_H}px"></div>`;
+  // Extra half-row so last label has a floor
+  html += `<div class="time-slot-label" style="height:${HOUR_H/2}px">12am</div>`;
+  html += '</div><div class="day-view-col" id="dayCol">';
+  for (let h = DAY_START; h <= DAY_END; h++) html += `<div class="hour-line" style="height:${HOUR_H}px"></div>`;
+  html += `<div class="hour-line" style="height:${HOUR_H/2}px"></div>`;
+
+  // Events
   timed.forEach(e => {
-    const startMins = timeToMins(e.startTime) - DAY_START*60;
-    const endMins   = timeToMins(e.endTime)   - DAY_START*60;
-    const top    = Math.max(0, startMins / 60 * HOUR_H);
+    const startMins = timeToMins(e.startTime);
+    const endMins   = timeToMins(e.endTime);
+    const top    = startMins / 60 * HOUR_H;
     const height = Math.max(20, (endMins - startMins) / 60 * HOUR_H - 2);
     html += `<div class="day-view-event" style="top:${top}px;height:${height}px;background:${e.color}28;color:${e.color};border-left:3px solid ${e.color}">${fmt12(e.startTime)} ${e.title}</div>`;
   });
+
+  // "Now" indicator — only on today
+  if (isToday) {
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const nowTop = nowMins / 60 * HOUR_H;
+    html += `<div id="nowLine" style="position:absolute;left:0;right:0;top:${nowTop}px;z-index:10;pointer-events:none">
+      <div style="display:flex;align-items:center;gap:0">
+        <div style="width:9px;height:9px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-left:-4px"></div>
+        <div style="flex:1;height:2px;background:#ef4444;opacity:0.85"></div>
+      </div>
+      <div style="position:absolute;left:10px;top:-8px;font-size:0.65rem;font-weight:700;color:#ef4444;font-family:var(--font-mono);white-space:nowrap">${fmt12(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'))}</div>
+    </div>`;
+  }
+
   html += '</div></div></div>';
   mv.innerHTML = html;
+
+  // Scroll to now (today) or first event
+  const scrollArea = document.getElementById('dayScrollArea');
+  if (scrollArea) {
+    let scrollTo = 0;
+    if (isToday) {
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      scrollTo = Math.max(0, (nowMins / 60 * HOUR_H) - 120); // 2hr above now
+    } else if (timed.length) {
+      const firstMins = timeToMins(timed[0].startTime);
+      scrollTo = Math.max(0, (firstMins / 60 * HOUR_H) - 40);
+    }
+    scrollArea.scrollTop = scrollTo;
+  }
+
+  // Keep now-line ticking every minute
+  if (isToday) {
+    clearInterval(window._nowTimer);
+    window._nowTimer = setInterval(() => {
+      const line = document.getElementById('nowLine');
+      if (!line) { clearInterval(window._nowTimer); return; }
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      line.style.top = (nowMins / 60 * HOUR_H) + 'px';
+      line.querySelector('div:last-child').textContent = fmt12(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'));
+    }, 60000);
+  }
 }
 
 function adjustZoom(delta) {
-  dayZoom = Math.min(120, Math.max(24, dayZoom + delta));
+  const scrollArea = document.getElementById('dayScrollArea');
+  const scrollRatio = scrollArea ? scrollArea.scrollTop / (dayZoom * 24) : 0;
+  dayZoom = Math.min(160, Math.max(24, dayZoom + delta));
   const label = document.getElementById('zoomLabel');
   if (label) label.textContent = Math.round(dayZoom/56*100) + '%';
   renderDay(cursor);
-  // Restore scroll position proportionally
+  // Restore relative scroll position
+  const newScrollArea = document.getElementById('dayScrollArea');
+  if (newScrollArea) newScrollArea.scrollTop = scrollRatio * (dayZoom * 24);
 }
 
 function resetZoom() {
@@ -511,6 +555,22 @@ function openDay(ds) {
   cursor.setHours(0,0,0,0);
   setView('day');
 }
+
+// ── Keyboard & scroll zoom (day view only) ────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (!e.ctrlKey && !e.metaKey) return;
+  if (view !== 'day') return;
+  if (e.key === '+' || e.key === '=') { e.preventDefault(); adjustZoom(12); }
+  if (e.key === '-')                  { e.preventDefault(); adjustZoom(-12); }
+  if (e.key === '0')                  { e.preventDefault(); resetZoom(); }
+});
+
+document.addEventListener('wheel', e => {
+  if (!e.ctrlKey && !e.metaKey) return;
+  if (view !== 'day') return;
+  e.preventDefault();
+  adjustZoom(e.deltaY < 0 ? 12 : -12);
+}, { passive: false });
 
 // ── Init ──────────────────────────────────────────────────────────────────
 loadEvents();
