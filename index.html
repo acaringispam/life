@@ -85,20 +85,6 @@
   .hour-line { height: 48px; border-top: 1px solid var(--border); position: relative; }
   .week-event { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 5px; font-size: 0.68rem; font-weight: 600; overflow: hidden; cursor: pointer; z-index: 2; line-height: 1.3; }
 
-  /* Day detail modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
-  .modal-header { padding: 18px 20px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .modal-title { font-size: 1rem; font-weight: 700; }
-  .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; padding: 2px 6px; border-radius: 4px; }
-  .modal-close:hover { background: var(--border); }
-  .modal-body { padding: 14px 20px 20px; }
-  .modal-event { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .modal-event:last-child { border-bottom: none; }
-  .modal-event-bar { width: 4px; border-radius: 2px; flex-shrink: 0; }
-  .modal-event-time { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; min-width: 80px; }
-  .modal-event-name { font-size: 0.875rem; font-weight: 600; }
-  .modal-allday { font-size: 0.7rem; background: var(--surface2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; }
 
   /* Day view */
   .day-view { padding: 0 24px 24px; }
@@ -106,6 +92,13 @@
   .day-view-grid { display: grid; grid-template-columns: 52px 1fr; }
   .day-view-col { border-left: 1px solid var(--border); position: relative; }
   .day-view-event { position: absolute; left: 4px; right: 4px; border-radius: 5px; padding: 3px 7px; font-size: 0.75rem; font-weight: 600; overflow: hidden; cursor: pointer; }
+
+  /* Styled scrollbar */
+  #dayScrollArea { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  #dayScrollArea::-webkit-scrollbar { width: 5px; }
+  #dayScrollArea::-webkit-scrollbar-track { background: transparent; }
+  #dayScrollArea::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  #dayScrollArea::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
   /* Config panel */
 
@@ -146,17 +139,6 @@
   <div class="upcoming-bar" id="upcomingBar"><span class="upcoming-label">Upcoming</span><span style="color:var(--text-muted);font-size:0.8rem">— load a JSON file to begin</span></div>
   <div id="legendRow" class="legend"></div>
   <div id="mainView" class="loading">Loading events…</div>
-</div>
-
-<!-- Modal -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle"></div>
-      <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">✕</button>
-    </div>
-    <div class="modal-body" id="modalBody"></div>
-  </div>
 </div>
 
 <script>
@@ -523,30 +505,12 @@ function resetZoom() {
   renderDay(cursor);
 }
 
-// ── Day modal (from month click) ──────────────────────────────────────────
+// ── Navigate to day on click ──────────────────────────────────────────────
 function openDay(ds) {
   cursor = new Date(ds + 'T12:00:00');
   cursor.setHours(0,0,0,0);
-  if (view !== 'month') { render(); return; }
-  const evs = eventsOn(ds);
-  const d = new Date(ds + 'T12:00:00');
-  document.getElementById('modalTitle').textContent = `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
-  const body = document.getElementById('modalBody');
-  if (!evs.length) { body.innerHTML = '<div style="color:var(--text-muted);padding:8px 0">No events</div>'; }
-  else {
-    const allDays = evs.filter(e => e.allDay);
-    const timed   = evs.filter(e => !e.allDay);
-    body.innerHTML =
-      allDays.map(e => `<div class="modal-allday" style="border-left:3px solid ${e.color};color:${e.color}">${e.title}</div>`).join('') +
-      timed.map(e => `<div class="modal-event">
-        <div class="modal-event-bar" style="background:${e.color}"></div>
-        <div><div class="modal-event-time">${fmt12(e.startTime)} – ${fmt12(e.endTime)}</div>
-        <div class="modal-event-name">${e.title}</div>${e.note?`<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px">${e.note}</div>`:''}</div>
-      </div>`).join('');
-  }
-  document.getElementById('modal').style.display = 'flex';
+  setView('day');
 }
-function closeModal(e) { if (e.target.id === 'modal') document.getElementById('modal').style.display = 'none'; }
 
 // ── Init ──────────────────────────────────────────────────────────────────
 loadEvents();
