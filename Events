@@ -1,0 +1,265 @@
+{
+  "meta": {
+    "name": "My Routine & Calendar",
+    "last_updated": "2026-06-11",
+    "timezone": "America/New_York"
+  },
+  "phases": [
+    { "id": "finals",   "label": "Finals Prep",   "color": "#4f8ef7" },
+    { "id": "job",      "label": "Seasonal Job",   "color": "#9f7aea" },
+    { "id": "selfstu",  "label": "Self-Study",     "color": "#38b2ac" },
+    { "id": "personal", "label": "Personal",       "color": "#ed8936" },
+    { "id": "key",      "label": "Key Date",       "color": "#e53e3e" },
+    { "id": "vacation", "label": "Vacation / Off", "color": "#ed64a6" }
+  ],
+  "recurring": [
+    {
+      "id": "r-morning", "title": "🌅 Morning Routine", "phase": "personal",
+      "startTime": "07:30", "endTime": "08:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-breakfast", "title": "🍳 Breakfast", "phase": "personal",
+      "startTime": "08:00", "endTime": "08:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-study1-hist", "title": "📚 Study — History", "phase": "finals",
+      "startTime": "08:30", "endTime": "10:30",
+      "days": ["Mon","Wed","Fri"],
+      "dateRange": ["2026-06-12", "2026-06-22"]
+    },
+    {
+      "id": "r-study1-phys", "title": "📚 Study — Physics", "phase": "finals",
+      "startTime": "08:30", "endTime": "10:30",
+      "days": ["Tue","Thu","Sat"],
+      "dateRange": ["2026-06-13", "2026-06-24"]
+    },
+    {
+      "id": "r-walk", "title": "🌿 Outdoor Walk / Run", "phase": "personal",
+      "startTime": "10:30", "endTime": "11:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-snack", "title": "Transition / Snack", "phase": "personal",
+      "startTime": "11:30", "endTime": "12:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-jobs", "title": "💼 Job Search", "phase": "personal",
+      "startTime": "12:00", "endTime": "13:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-lunch", "title": "🍽 Lunch + Rest", "phase": "personal",
+      "startTime": "13:00", "endTime": "14:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-study2", "title": "📖 Study Block 2", "phase": "finals",
+      "startTime": "14:00", "endTime": "15:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-flex", "title": "🎨 Flexible / Hobbies", "phase": "personal",
+      "startTime": "15:00", "endTime": "17:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-chores", "title": "🧹 Chores / Errands", "phase": "personal",
+      "startTime": "17:00", "endTime": "18:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-dinner1", "title": "🍽 Dinner", "phase": "personal",
+      "startTime": "18:00", "endTime": "19:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-free1", "title": "📺 Free Time", "phase": "personal",
+      "startTime": "19:30", "endTime": "21:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-review", "title": "📝 Light Review", "phase": "finals",
+      "startTime": "21:00", "endTime": "21:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-wind1", "title": "🌙 Wind-Down", "phase": "personal",
+      "startTime": "21:30", "endTime": "22:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-12", "2026-06-25"]
+    },
+    {
+      "id": "r-sun-plan", "title": "🗂 Weekly Planning + Pick Gym Days", "phase": "personal",
+      "startTime": "10:00", "endTime": "11:00",
+      "days": ["Sun"],
+      "dateRange": ["2026-06-14", "2026-09-07"]
+    },
+    {
+      "id": "r-sun-walk", "title": "🌿 Outdoor Walk", "phase": "personal",
+      "startTime": "11:00", "endTime": "12:00",
+      "days": ["Sun"],
+      "dateRange": ["2026-06-14", "2026-09-07"]
+    },
+    {
+      "id": "r-gym-wake", "title": "⏰ Wake Up for Gym", "phase": "personal",
+      "startTime": "05:00", "endTime": "05:30",
+      "days": ["Tue","Wed","Thu"],
+      "dateRange": ["2026-06-16", "2026-09-07"],
+      "note": "Default Tue/Wed/Thu — adjust weekly as needed"
+    },
+    {
+      "id": "r-gym-lift", "title": "🏋️ Gym — Weight Lifting", "phase": "personal",
+      "startTime": "05:30", "endTime": "06:30",
+      "days": ["Tue","Wed","Thu"],
+      "dateRange": ["2026-06-16", "2026-09-07"],
+      "note": "Default Tue/Wed/Thu — adjust weekly as needed"
+    },
+    {
+      "id": "r-gym-free", "title": "😴 Post-Gym Free Time", "phase": "personal",
+      "startTime": "06:30", "endTime": "07:30",
+      "days": ["Tue","Wed","Thu"],
+      "dateRange": ["2026-06-16", "2026-09-07"]
+    },
+    {
+      "id": "r-job-morning", "title": "🌅 Morning Routine", "phase": "job",
+      "startTime": "07:30", "endTime": "08:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-bfast", "title": "🍳 Breakfast", "phase": "job",
+      "startTime": "08:00", "endTime": "08:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-stem", "title": "🧠 STEM Study — Morning Block", "phase": "selfstu",
+      "startTime": "08:30", "endTime": "09:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-work", "title": "💼 Work", "phase": "job",
+      "startTime": "10:00", "endTime": "19:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-dinner", "title": "🍽 Dinner", "phase": "personal",
+      "startTime": "19:30", "endTime": "20:00",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-walk", "title": "🌿 Evening Walk", "phase": "personal",
+      "startTime": "20:00", "endTime": "20:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-studfree", "title": "📖 Study or Free — your call", "phase": "selfstu",
+      "startTime": "20:30", "endTime": "21:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    },
+    {
+      "id": "r-job-wind", "title": "🌙 Wind-Down / Sleep Prep", "phase": "personal",
+      "startTime": "21:30", "endTime": "22:30",
+      "days": ["Mon","Tue","Wed","Thu","Fri","Sat"],
+      "dateRange": ["2026-06-27", "2026-09-07"]
+    }
+  ],
+  "oneoff": [
+    {
+      "id": "e-hist-review", "title": "📖 Easy Review — calm, no new material", "phase": "finals",
+      "date": "2026-06-23", "startTime": "08:00", "endTime": "08:55"
+    },
+    {
+      "id": "e-hist-commute1", "title": "🚗 Commute to Testing Center", "phase": "key",
+      "date": "2026-06-23", "startTime": "08:55", "endTime": "09:15"
+    },
+    {
+      "id": "e-hist-exam", "title": "🎓 FINAL EXAM — History", "phase": "key",
+      "date": "2026-06-23", "startTime": "09:15", "endTime": "12:45"
+    },
+    {
+      "id": "e-hist-commute2", "title": "🚗 Commute Home", "phase": "key",
+      "date": "2026-06-23", "startTime": "12:45", "endTime": "13:05"
+    },
+    {
+      "id": "e-hist-celebrate", "title": "🎉 Rest + Celebrate", "phase": "personal",
+      "date": "2026-06-23", "startTime": "13:05", "endTime": "22:00"
+    },
+    {
+      "id": "e-phys-review", "title": "📖 Easy Review — calm, no new material", "phase": "finals",
+      "date": "2026-06-25", "startTime": "08:00", "endTime": "08:55"
+    },
+    {
+      "id": "e-phys-commute1", "title": "🚗 Commute to Testing Center", "phase": "key",
+      "date": "2026-06-25", "startTime": "08:55", "endTime": "09:15"
+    },
+    {
+      "id": "e-phys-exam", "title": "🎓 FINAL EXAM — Physics", "phase": "key",
+      "date": "2026-06-25", "startTime": "09:15", "endTime": "12:45"
+    },
+    {
+      "id": "e-phys-commute2", "title": "🚗 Commute Home", "phase": "key",
+      "date": "2026-06-25", "startTime": "12:45", "endTime": "13:05"
+    },
+    {
+      "id": "e-phys-celebrate", "title": "🎉 FINALS DONE — Rest & Celebrate!", "phase": "personal",
+      "date": "2026-06-25", "startTime": "13:05", "endTime": "23:00"
+    },
+    {
+      "id": "e-job-start", "title": "💼 Seasonal Job Starts", "phase": "key",
+      "date": "2026-06-27", "allDay": true
+    },
+    {
+      "id": "e-vac-start", "title": "🏖 Vacation Begins", "phase": "vacation",
+      "date": "2026-07-25", "allDay": true
+    },
+    {
+      "id": "e-vac-end", "title": "🏖 Vacation Ends / Back to Work", "phase": "vacation",
+      "date": "2026-08-01", "allDay": true
+    },
+    {
+      "id": "e-off-aug27", "title": "📚 Day Off — Classes", "phase": "vacation",
+      "date": "2026-08-27", "allDay": true
+    },
+    {
+      "id": "e-off-sep1", "title": "📚 Day Off — Classes", "phase": "vacation",
+      "date": "2026-09-01", "allDay": true
+    },
+    {
+      "id": "e-off-sep3", "title": "📚 Day Off — Classes", "phase": "vacation",
+      "date": "2026-09-03", "allDay": true
+    },
+    {
+      "id": "e-job-end", "title": "💼 Seasonal Job Ends", "phase": "key",
+      "date": "2026-09-07", "allDay": true
+    },
+    {
+      "id": "e-selfstu-resume", "title": "🧠 Self-Study Routine Resumes", "phase": "selfstu",
+      "date": "2026-09-08", "allDay": true
+    }
+  ],
+  "vacationRanges": [
+    { "start": "2026-07-25", "end": "2026-08-01", "label": "Vacation" }
+  ],
+  "daysOff": ["2026-08-27", "2026-09-01", "2026-09-03"]
+}
