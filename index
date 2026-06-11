@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Calendar</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2435;
+    --border: #2a3045;
+    --text: #e8eaf0;
+    --text-muted: #6b7494;
+    --text-dim: #8b95b8;
+    --accent: #4f8ef7;
+    --today-bg: #1a2440;
+    --today-border: #4f8ef7;
+    --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); min-height: 100vh; }
+
+  /* Layout */
+  .app { display: grid; grid-template-rows: auto auto 1fr; min-height: 100vh; }
+  header { padding: 18px 24px 0; border-bottom: 1px solid var(--border); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .header-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+  .header-title span { color: var(--accent); }
+  .nav-row { display: flex; align-items: center; gap: 8px; }
+  .nav-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.12s; }
+  .nav-btn:hover { background: var(--border); color: var(--text); }
+  .nav-month { font-size: 1rem; font-weight: 700; min-width: 160px; text-align: center; }
+  .view-tabs { display: flex; gap: 6px; }
+  .view-tab { padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-muted); transition: all 0.12s; }
+  .view-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Upcoming banner */
+  .upcoming-bar { padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 16px; overflow-x: auto; scrollbar-width: none; }
+  .upcoming-bar::-webkit-scrollbar { display: none; }
+  .upcoming-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); white-space: nowrap; align-self: center; }
+  .upcoming-chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); white-space: nowrap; font-size: 0.75rem; cursor: pointer; transition: background 0.12s; }
+  .upcoming-chip:hover { background: var(--border); }
+  .upcoming-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .upcoming-days { font-weight: 700; color: var(--text-dim); }
+
+  /* Legend */
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; padding: 8px 24px; border-bottom: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-muted); cursor: pointer; padding: 2px 0; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
+  .legend-item.dimmed { opacity: 0.35; }
+
+  /* Month view */
+  .month-view { padding: 16px 24px 24px; }
+  .weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+  .weekday-label { text-align: center; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 4px 0; }
+  .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .day-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-height: 96px; padding: 6px; cursor: pointer; transition: border-color 0.12s; position: relative; overflow: hidden; }
+  .day-cell:hover { border-color: var(--text-muted); }
+  .day-cell.today { background: var(--today-bg); border-color: var(--today-border); }
+  .day-cell.other-month { opacity: 0.35; }
+  .day-cell.has-key { border-color: #e53e3e; }
+  .day-cell.vacation-day { background: #1a1028; }
+  .day-num { font-size: 0.78rem; font-weight: 700; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+  .day-num.today-num { color: var(--accent); }
+  .today-badge { background: var(--accent); color: white; font-size: 0.6rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; }
+  .day-event { font-size: 0.67rem; padding: 2px 5px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; cursor: pointer; }
+  .day-more { font-size: 0.65rem; color: var(--text-muted); padding: 1px 4px; }
+
+  /* Week view */
+  .week-view { padding: 0 24px 24px; overflow-x: auto; }
+  .week-grid { display: grid; min-width: 700px; }
+  .week-header-row { display: grid; grid-template-columns: 52px repeat(7, 1fr); border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .week-time-gutter { font-size: 0.65rem; color: var(--text-muted); }
+  .week-day-head { padding: 10px 4px; text-align: center; }
+  .week-day-name { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+  .week-day-num { font-size: 1.1rem; font-weight: 800; color: var(--text-dim); }
+  .week-day-head.today .week-day-num { color: var(--accent); }
+  .week-body { display: grid; grid-template-columns: 52px repeat(7, 1fr); }
+  .time-col { display: flex; flex-direction: column; }
+  .time-slot-label { height: 48px; display: flex; align-items: flex-start; padding-top: 2px; font-size: 0.62rem; color: var(--text-muted); font-family: var(--font-mono); padding-right: 6px; text-align: right; justify-content: flex-end; }
+  .day-col { border-left: 1px solid var(--border); position: relative; }
+  .hour-line { height: 48px; border-top: 1px solid var(--border); position: relative; }
+  .week-event { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 5px; font-size: 0.68rem; font-weight: 600; overflow: hidden; cursor: pointer; z-index: 2; line-height: 1.3; }
+
+  /* Day detail modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
+  .modal-header { padding: 18px 20px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-title { font-size: 1rem; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; padding: 2px 6px; border-radius: 4px; }
+  .modal-close:hover { background: var(--border); }
+  .modal-body { padding: 14px 20px 20px; }
+  .modal-event { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .modal-event:last-child { border-bottom: none; }
+  .modal-event-bar { width: 4px; border-radius: 2px; flex-shrink: 0; }
+  .modal-event-time { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; min-width: 80px; }
+  .modal-event-name { font-size: 0.875rem; font-weight: 600; }
+  .modal-allday { font-size: 0.7rem; background: var(--surface2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; }
+
+  /* Day view */
+  .day-view { padding: 0 24px 24px; }
+  .day-view-header { padding: 12px 0 10px; font-size: 1rem; font-weight: 700; }
+  .day-view-grid { display: grid; grid-template-columns: 52px 1fr; }
+  .day-view-col { border-left: 1px solid var(--border); position: relative; }
+  .day-view-event { position: absolute; left: 4px; right: 4px; border-radius: 5px; padding: 3px 7px; font-size: 0.75rem; font-weight: 600; overflow: hidden; cursor: pointer; }
+
+  /* Config panel */
+
+  .error-bar { background: #2d1515; border: 1px solid #e53e3e; color: #fc8181; padding: 8px 24px; font-size: 0.8rem; display: none; }
+  .loading { padding: 48px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+  @media (max-width: 600px) {
+    .month-view, .week-view, .day-view { padding: 8px 10px 16px; }
+    .upcoming-bar { padding: 8px 10px; }
+    .legend { padding: 6px 10px; }
+    header { padding: 12px 10px 0; }
+    .day-cell { min-height: 64px; padding: 4px; }
+    .day-event { font-size: 0.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="header-top">
+      <div class="header-title">My <span>Calendar</span></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="view-tabs">
+          <button class="view-tab active" onclick="setView('month')">Month</button>
+          <button class="view-tab" onclick="setView('week')">Week</button>
+          <button class="view-tab" onclick="setView('day')">Day</button>
+        </div>
+        <div class="nav-row">
+          <button class="nav-btn" onclick="navigate(-1)">‹</button>
+          <div class="nav-month" id="navLabel">—</div>
+          <button class="nav-btn" onclick="navigate(1)">›</button>
+          <button class="nav-btn" onclick="goToday()">Today</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="error-bar" id="errorBar"></div>
+  <div class="upcoming-bar" id="upcomingBar"><span class="upcoming-label">Upcoming</span><span style="color:var(--text-muted);font-size:0.8rem">— load a JSON file to begin</span></div>
+  <div id="legendRow" class="legend"></div>
+  <div id="mainView" class="loading">Loading events…</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let DATA = null;
+let EVENTS_FLAT = [];  // { date, title, phase, color, startTime, endTime, allDay, note }
+let view = 'month';
+let cursor = new Date();
+cursor.setHours(0,0,0,0);
+let hiddenPhases = new Set();
+
+const PHASE_COLORS = {};
+const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── Load ──────────────────────────────────────────────────────────────────
+async function loadEvents() {
+  try {
+    const res = await fetch('./events.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    DATA = await res.json();
+    initData();
+    render();
+  } catch(e) {
+    showError('Could not load events.json — make sure it is in the same folder as this HTML file. (' + e.message + ')');
+    document.getElementById('mainView').innerHTML = '<div class="loading" style="color:#fc8181">Could not load events.json.<br>Make sure it is in the same folder as calendar.html.</div>';
+  }
+}
+
+function initData() {
+  PHASE_COLORS['default'] = '#6b7494';
+  (DATA.phases||[]).forEach(p => PHASE_COLORS[p.id] = p.color);
+
+  EVENTS_FLAT = [];
+
+  // Expand recurring events
+  (DATA.recurring||[]).forEach(r => {
+    const [sy,sm,sd] = r.dateRange[0].split('-').map(Number);
+    const [ey,em,ed] = r.dateRange[1].split('-').map(Number);
+    const start = new Date(sy,sm-1,sd);
+    const end   = new Date(ey,em-1,ed);
+    const daySet = new Set(r.days);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      if (daySet.has(WEEKDAYS[d.getDay()])) {
+        EVENTS_FLAT.push({
+          date: fmtDate(d), title: r.title, phase: r.phase,
+          color: PHASE_COLORS[r.phase]||PHASE_COLORS['default'],
+          startTime: r.startTime, endTime: r.endTime,
+          allDay: false, note: r.note||null
+        });
+      }
+    }
+  });
+
+  // One-off events
+  (DATA.oneoff||[]).forEach(e => {
+    EVENTS_FLAT.push({
+      date: e.date, title: e.title, phase: e.phase,
+      color: PHASE_COLORS[e.phase]||PHASE_COLORS['default'],
+      startTime: e.startTime||null, endTime: e.endTime||null,
+      allDay: e.allDay||false, note: e.note||null
+    });
+  });
+
+  EVENTS_FLAT.sort((a,b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    if (a.allDay && !b.allDay) return -1;
+    if (!a.allDay && b.allDay) return 1;
+    return (a.startTime||'') < (b.startTime||'') ? -1 : 1;
+  });
+
+  renderLegend();
+  renderUpcoming();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayStr() { return fmtDate(new Date()); }
+function eventsOn(dateStr) {
+  return EVENTS_FLAT.filter(e => e.date === dateStr && !hiddenPhases.has(e.phase));
+}
+function timeToMins(t) {
+  if (!t) return 0;
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+function fmt12(t) {
+  if (!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+function isVacation(dateStr) {
+  return (DATA.vacationRanges||[]).some(v => dateStr >= v.start && dateStr <= v.end);
+}
+function isDayOff(dateStr) {
+  return (DATA.daysOff||[]).includes(dateStr);
+}
+function showError(msg) {
+  const bar = document.getElementById('errorBar');
+  bar.textContent = msg; bar.style.display = 'block';
+  setTimeout(() => bar.style.display='none', 6000);
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────
+function renderLegend() {
+  const row = document.getElementById('legendRow');
+  row.innerHTML = '';
+  (DATA.phases||[]).forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'legend-item' + (hiddenPhases.has(p.id) ? ' dimmed' : '');
+    item.innerHTML = `<div class="legend-dot" style="background:${p.color}"></div>${p.label}`;
+    item.onclick = () => { hiddenPhases.has(p.id) ? hiddenPhases.delete(p.id) : hiddenPhases.add(p.id); renderLegend(); render(); };
+    row.appendChild(item);
+  });
+}
+
+// ── Upcoming ──────────────────────────────────────────────────────────────
+function renderUpcoming() {
+  const bar = document.getElementById('upcomingBar');
+  bar.innerHTML = '<span class="upcoming-label">Upcoming</span>';
+  const today = todayStr();
+  const future = EVENTS_FLAT.filter(e => e.date >= today && (e.allDay || ['key','vacation'].includes(e.phase)));
+  const seen = new Set();
+  let count = 0;
+  for (const ev of future) {
+    const key = ev.date + ev.title;
+    if (seen.has(key) || count > 8) continue;
+    seen.add(key); count++;
+    const d = new Date(ev.date + 'T12:00:00');
+    const td = new Date(today + 'T12:00:00');
+    const diff = Math.round((d - td) / 86400000);
+    const chip = document.createElement('div');
+    chip.className = 'upcoming-chip';
+    chip.innerHTML = `<div class="upcoming-dot" style="background:${ev.color}"></div><span>${ev.title}</span><span class="upcoming-days">${diff === 0 ? 'today' : diff === 1 ? 'tmrw' : 'in '+diff+'d'}</span>`;
+    chip.onclick = () => { cursor = new Date(d); cursor.setHours(0,0,0,0); setView('day'); };
+    bar.appendChild(chip);
+  }
+  if (count === 0) bar.innerHTML += '<span style="color:var(--text-muted);font-size:0.8rem">No upcoming key dates</span>';
+}
+
+// ── View controller ───────────────────────────────────────────────────────
+function setView(v) {
+  view = v;
+  document.querySelectorAll('.view-tab').forEach((t,i) => t.classList.toggle('active', ['month','week','day'][i] === v));
+  render();
+}
+function navigate(dir) {
+  if (view === 'month') cursor.setMonth(cursor.getMonth() + dir);
+  else if (view === 'week') cursor.setDate(cursor.getDate() + dir * 7);
+  else cursor.setDate(cursor.getDate() + dir);
+  render();
+}
+function goToday() { cursor = new Date(); cursor.setHours(0,0,0,0); render(); }
+
+function render() {
+  if (!DATA) return;
+  if (view === 'month') renderMonth();
+  else if (view === 'week') renderWeek();
+  else renderDay(cursor);
+}
+
+// ── Month ─────────────────────────────────────────────────────────────────
+function renderMonth() {
+  document.getElementById('navLabel').textContent = `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`;
+  const mv = document.getElementById('mainView');
+  mv.className = 'month-view';
+
+  const year = cursor.getFullYear(), month = cursor.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = todayStr();
+
+  let html = '<div class="weekday-row">' + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="weekday-label">${d}</div>`).join('') + '</div>';
+  html += '<div class="month-grid">';
+
+  // Leading blanks
+  for (let i = 0; i < firstDay; i++) {
+    const prevDate = new Date(year, month, -firstDay + i + 1);
+    const ds = fmtDate(prevDate);
+    html += `<div class="day-cell other-month" onclick="openDay('${ds}')"><div class="day-num">${prevDate.getDate()}</div></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evs = eventsOn(ds);
+    const isToday = ds === today;
+    const hasKey = evs.some(e => e.phase === 'key');
+    const isVac = isVacation(ds);
+    const isOff = isDayOff(ds);
+
+    let cls = 'day-cell';
+    if (isToday) cls += ' today';
+    if (hasKey) cls += ' has-key';
+    if (isVac || isOff) cls += ' vacation-day';
+
+    const numHtml = `<div class="day-num ${isToday?'today-num':''}">
+      <span>${d}</span>${isToday?'<span class="today-badge">TODAY</span>':''}${isVac?'<span style="font-size:0.6rem;color:#ed64a6">🏖</span>':''}${isOff?'<span style="font-size:0.6rem;color:#ed64a6">off</span>':''}
+    </div>`;
+
+    // Show up to 3 events, then "+N more"
+    const shown = evs.slice(0, 3);
+    const more = evs.length - shown.length;
+    const evHtml = shown.map(e =>
+      `<div class="day-event" style="background:${e.color}22;color:${e.color};border-left:2px solid ${e.color}" title="${e.title}">${e.title}</div>`
+    ).join('') + (more > 0 ? `<div class="day-more">+${more} more</div>` : '');
+
+    html += `<div class="${cls}" onclick="openDay('${ds}')">${numHtml}${evHtml}</div>`;
+  }
+
+  // Trailing
+  const totalCells = firstDay + daysInMonth;
+  const trailing = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= trailing; i++) {
+    const ds = fmtDate(new Date(year, month+1, i));
+    html += `<div class="day-cell other-month" onclick="openDay('${ds}')"><div class="day-num">${i}</div></div>`;
+  }
+
+  html += '</div>';
+  mv.innerHTML = html;
+}
+
+// ── Week ──────────────────────────────────────────────────────────────────
+function renderWeek() {
+  const dow = cursor.getDay();
+  const weekStart = new Date(cursor); weekStart.setDate(cursor.getDate() - dow);
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+  document.getElementById('navLabel').textContent = `${MONTHS[weekStart.getMonth()]} ${weekStart.getDate()} – ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
+    days.push(d);
+  }
+  const today = todayStr();
+  const HOUR_H = 48; // px per hour
+  const DAY_START = 5; // 5am
+
+  const mv = document.getElementById('mainView');
+  mv.className = 'week-view';
+
+  let html = '<div class="week-grid"><div class="week-header-row"><div class="week-time-gutter"></div>';
+  days.forEach(d => {
+    const ds = fmtDate(d);
+    const isT = ds === today;
+    html += `<div class="week-day-head ${isT?'today':''}"><div class="week-day-name">${WEEKDAYS[d.getDay()]}</div><div class="week-day-num">${d.getDate()}</div></div>`;
+  });
+  html += '</div><div class="week-body"><div class="time-col">';
+  for (let h = DAY_START; h <= 23; h++) {
+    const label = h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h-12}pm`;
+    html += `<div class="time-slot-label">${label}</div>`;
+  }
+  html += '</div>';
+
+  days.forEach(d => {
+    const ds = fmtDate(d);
+    const evs = eventsOn(ds).filter(e => !e.allDay && e.startTime);
+    html += `<div class="day-col" onclick="openDay('${ds}')">`;
+    for (let h = DAY_START; h <= 23; h++) html += '<div class="hour-line"></div>';
+    evs.forEach(e => {
+      const startMins = timeToMins(e.startTime) - DAY_START*60;
+      const endMins   = timeToMins(e.endTime)   - DAY_START*60;
+      const top  = Math.max(0, startMins / 60 * HOUR_H);
+      const height = Math.max(18, (endMins - startMins) / 60 * HOUR_H - 2);
+      html += `<div class="week-event" style="top:${top}px;height:${height}px;background:${e.color}22;color:${e.color};border-left:3px solid ${e.color}" onclick="event.stopPropagation();openDay('${ds}')" title="${e.title}">${e.title}</div>`;
+    });
+    html += '</div>';
+  });
+
+  html += '</div></div>';
+  mv.innerHTML = html;
+}
+
+// ── Day view ──────────────────────────────────────────────────────────────
+function renderDay(d) {
+  const ds = fmtDate(d);
+  document.getElementById('navLabel').textContent = `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  const evs = eventsOn(ds);
+  const allDays = evs.filter(e => e.allDay);
+  const timed   = evs.filter(e => !e.allDay && e.startTime);
+  const HOUR_H = 56;
+  const DAY_START = 5;
+
+  const mv = document.getElementById('mainView');
+  mv.className = 'day-view';
+
+  let html = `<div class="day-view-header">${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  if (isVacation(ds)) html += ' 🏖 <span style="color:#ed64a6;font-size:0.8rem">Vacation</span>';
+  if (isDayOff(ds)) html += ' <span style="color:#ed64a6;font-size:0.8rem">Day Off</span>';
+  html += '</div>';
+
+  if (allDays.length) {
+    html += allDays.map(e => `<div class="modal-allday" style="border-left:3px solid ${e.color};color:${e.color}">${e.title}</div>`).join('');
+  }
+
+  if (timed.length === 0 && allDays.length === 0) {
+    html += '<div style="padding:32px 0;color:var(--text-muted);text-align:center">No events</div>';
+    mv.innerHTML = html; return;
+  }
+
+  html += '<div class="day-view-grid"><div class="time-col">';
+  for (let h = DAY_START; h <= 23; h++) {
+    const label = h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h-12}pm`;
+    html += `<div class="time-slot-label" style="height:${HOUR_H}px">${label}</div>`;
+  }
+  html += '</div><div class="day-view-col">';
+  for (let h = DAY_START; h <= 23; h++) html += `<div class="hour-line" style="height:${HOUR_H}px"></div>`;
+  timed.forEach(e => {
+    const startMins = timeToMins(e.startTime) - DAY_START*60;
+    const endMins   = timeToMins(e.endTime)   - DAY_START*60;
+    const top    = Math.max(0, startMins / 60 * HOUR_H);
+    const height = Math.max(20, (endMins - startMins) / 60 * HOUR_H - 2);
+    html += `<div class="day-view-event" style="top:${top}px;height:${height}px;background:${e.color}28;color:${e.color};border-left:3px solid ${e.color}">${fmt12(e.startTime)} ${e.title}</div>`;
+  });
+  html += '</div></div>';
+  mv.innerHTML = html;
+}
+
+// ── Day modal (from month click) ──────────────────────────────────────────
+function openDay(ds) {
+  cursor = new Date(ds + 'T12:00:00');
+  cursor.setHours(0,0,0,0);
+  if (view !== 'month') { render(); return; }
+  const evs = eventsOn(ds);
+  const d = new Date(ds + 'T12:00:00');
+  document.getElementById('modalTitle').textContent = `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  const body = document.getElementById('modalBody');
+  if (!evs.length) { body.innerHTML = '<div style="color:var(--text-muted);padding:8px 0">No events</div>'; }
+  else {
+    const allDays = evs.filter(e => e.allDay);
+    const timed   = evs.filter(e => !e.allDay);
+    body.innerHTML =
+      allDays.map(e => `<div class="modal-allday" style="border-left:3px solid ${e.color};color:${e.color}">${e.title}</div>`).join('') +
+      timed.map(e => `<div class="modal-event">
+        <div class="modal-event-bar" style="background:${e.color}"></div>
+        <div><div class="modal-event-time">${fmt12(e.startTime)} – ${fmt12(e.endTime)}</div>
+        <div class="modal-event-name">${e.title}</div>${e.note?`<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px">${e.note}</div>`:''}</div>
+      </div>`).join('');
+  }
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal(e) { if (e.target.id === 'modal') document.getElementById('modal').style.display = 'none'; }
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadEvents();
+</script>
+</body>
+</html>
